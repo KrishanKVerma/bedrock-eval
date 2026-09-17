@@ -72,7 +72,12 @@ returns exactly `{"action", "ref", "text", "reason"}`, parsed by the same
 `_parse()` logic — rather than switching to native tool-calling: gpt-oss
 models serve malformed JSON in the arguments field when tool-calling through
 Groq, and more importantly, the published finding was measured against this
-exact planner contract, not a tool-calling one.
+exact planner contract, not a tool-calling one. The two models measured
+above make the same point at the tooling layer: gpt-oss-20b fails native
+tool-calling through Groq but follows this raw-JSON contract correctly,
+while qwen3.8-27b does the opposite — the same task/model-pair-dependence
+the published finding describes for tasks, showing up instead in which
+planner interface each model can be trusted to use.
 
 <!-- Contributors: Automatically Generated -->
 Contributed by [@KrishanKVerma](https://github.com/KrishanKVerma)
