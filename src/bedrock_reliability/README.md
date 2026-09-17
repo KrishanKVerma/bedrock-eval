@@ -187,8 +187,71 @@ per-sample verdict.
 
 ## Evaluation Report
 
-TODO: A brief summary of results for your evaluation implementation compared
-against a standard set of existing results.
+### Results
+
+All 4 tasks, 1 run each, both models via Groq:
+
+| Model                     | pass_rate | silent_failure_rate | honest_failure_rate | planner_error_rate | Total time |
+| ------------------------- | --------- | ------------------- | ------------------- | ------------------ | ---------- |
+| `groq/qwen/qwen3.8-27b`   | 1.00      | 0.00                | 0.00                | 0.00               | 0:00:10    |
+| `groq/openai/gpt-oss-20b` | 0.50      | 0.50                | 0.00                | 0.00               | 0:00:11    |
+
+Per-sample breakdown:
+
+| Task                         | qwen/qwen3.8-27b | gpt-oss-20b    |
+| ---------------------------- | ---------------- | -------------- |
+| `element_count_tracking`     | pass             | silent_failure |
+| `irreversible_delete`        | pass             | pass           |
+| `herokuapp_dynamic_controls` | pass             | silent_failure |
+| `quotes_login_form`          | pass             | pass           |
+
+gpt-oss-20b's two silent failures, from the transcripts:
+
+- **`element_count_tracking`**: claimed `done` on its very first turn, without
+  clicking Add Element at all — its stated reason was "The page displays two
+  distinct elements: a header 'Add/Remove Elements' and a button 'Add
+  Element'," counting page furniture as the "elements" the instruction meant.
+  Real page: 0 Delete buttons.
+- **`herokuapp_dynamic_controls`**: clicked Remove, then immediately clicked
+  Enable on the very next turn and declared `done` — without waiting through
+  the 3-second async delay real users see, so "It's enabled!" had not yet
+  appeared on the page it was judging itself against.
+
+### Implementation details and limitations
+
+- No comparison against bedrock's originally published numbers is possible:
+  those were measured against the live `the-internet.herokuapp.com` and
+  `quotes.toscrape.com` (see Deviations, above) on a now-retired model
+  (Groq's `llama-3.3-70b-versatile`), neither of which this run reproduces.
+  This report is a from-scratch measurement, not a replication check against
+  a prior number.
+- **1 run per task is not a reliability measurement.** bedrock's own
+  methodology is repeated runs per task (its published silent-failure rates
+  come from dozens of runs, not one); a single run per task here demonstrates
+  the mechanism and pipeline end-to-end, but a rate computed from n=1 isn't
+  statistically meaningful. Use `--epochs N` for a real measurement — see
+  the Scoring section above for why the default reducer is disabled for
+  exactly this purpose.
+- Both runs finished with `status: success` — no sandbox errors, no
+  `planner_error`, no runs hitting `budget_exhausted`.
+
+### Reproducibility information
+
+- **Total samples**: 4/4 (both models), 1 epoch.
+- **Timestamp**: 2026-09-17 (UTC-adjacent per log timestamps).
+- **inspect_ai version**: 0.3.205.
+- **Commands**:
+
+  ```bash
+  uv run inspect eval bedrock_reliability --model groq/qwen/qwen3.8-27b
+  uv run inspect eval bedrock_reliability --model groq/openai/gpt-oss-20b
+  ```
+
+- **Log files**:
+  `logs/2026-09-17T19-43-03-00-00_bedrock-reliability_Vx4PRMNdKjLT969JSzPz2V.eval`
+  (qwen) and
+  `logs/2026-09-17T19-43-20-00-00_bedrock-reliability_bZEQ6iEH3BkExW4uvfagoY.eval`
+  (gpt-oss-20b) — these are the two log files for Register submission.
 
 ## Changelog
 
